@@ -1,0 +1,3 @@
+application\common\behavior\Config.php
+
+97 // config('url_controller_layer', 'home');
