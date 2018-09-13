@@ -34,7 +34,9 @@
         "endroid/qrcode":"2.*",
         "guzzlehttp/guzzle": "6.*",
         "psr/log": "^1.0.1",
-        "twig/twig": "1.*"
+        "twig/twig": "1.*",
+
+        "topthink/think-testing":"1.*"
     },
     "extra": {
         "think-path": "thinkphp"
