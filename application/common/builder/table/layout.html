@@ -234,7 +234,7 @@
                                                         $_field_display = request()->param('_field_display');
                                                     }
                                                 {/php}
-                                                <a href="javascript:void(0);" class="field-filter" data-filter="{$filter_columns[$column['name']]['filter']}" data-list="{$filter_columns[$column['name']]['list']}" data-type="{$filter_columns[$column['name']]['type']}" data-options='{$filter_columns[$column["name"]]["options"]|default=""}' data-map='{$filter_columns[$column["name"]]["map"]|default=""}' data-field-display="{$column['name']}" data-field="{$filter_columns[$column['name']]['field']}" data-table="{$filter_columns[$column['name']]['table']}" data-toggle="tooltip" data-original-title="筛选"><i class="fa fa-filter {notin name='column.name' value='$_field_display'}text-muted{/notin}"></i></a>
+                                                <a href="javascript:void(0);" class="field-filter" data-filter="{$filter_columns[$column['name']]['filter']}" data-list="{$filter_columns[$column['name']]['list']}" data-type="{$filter_columns[$column['name']]['type']}" data-options='{$filter_columns[$column["name"]]["options"]|default=""}' data-map='{$filter_columns[$column["name"]]["map"]|default=""}' data-field-display="{$column['name']}" data-token="{$filter_columns[$column['name']]['token']}" data-toggle="tooltip" data-original-title="筛选"><i class="fa fa-filter {notin name='column.name' value='$_field_display'}text-muted{/notin}"></i></a>
                                                 {php}endif;{/php}
                                                 </span>
                                             </th>
@@ -255,7 +255,7 @@
                                         </colgroup>
                                         <tbody>
                                             {volist name="row_list" id="row"}
-                                            <tr class="{$row['_tr_class']|default=''}" id="builder-table-main-tr">
+                                            <tr class="{$row['_tr_class']|default=''}">
                                                 {if (!$hide_checkbox)}
                                                 <td class="text-center">
                                                     <div class="table-cell">
@@ -351,7 +351,7 @@
                                                             $_field_display = request()->param('_field_display');
                                                         }
                                                     {/php}
-                                                    <a href="javascript:void(0);" class="field-filter" data-filter="{$filter_columns[$column['name']]['filter']}" data-list="{$filter_columns[$column['name']]['list']}" data-type="{$filter_columns[$column['name']]['type']}" data-options='{$filter_columns[$column["name"]]["options"]|default=""}' data-map='{$filter_columns[$column["name"]]["map"]|default=""}' data-field-display="{$column['name']}" data-field="{$filter_columns[$column['name']]['field']}" data-table="{$filter_columns[$column['name']]['table']}" data-toggle="tooltip" data-original-title="筛选"><i class="fa fa-filter {notin name='column.name' value='$_field_display'}text-muted{/notin}"></i></a>
+                                                    <a href="javascript:void(0);" class="field-filter" data-filter="{$filter_columns[$column['name']]['filter']}" data-list="{$filter_columns[$column['name']]['list']}" data-type="{$filter_columns[$column['name']]['type']}" data-options='{$filter_columns[$column["name"]]["options"]|default=""}' data-map='{$filter_columns[$column["name"]]["map"]|default=""}' data-field-display="{$column['name']}" data-token="{$filter_columns[$column['name']]['token']}" data-toggle="tooltip" data-original-title="筛选"><i class="fa fa-filter {notin name='column.name' value='$_field_display'}text-muted{/notin}"></i></a>
                                                     {php}endif;{/php}
                                                     </span>
                                                     </th>
@@ -466,7 +466,7 @@
                                                                 $_field_display = request()->param('_field_display');
                                                             }
                                                         {/php}
-                                                        <a href="javascript:void(0);" class="field-filter" data-filter="{$filter_columns[$column['name']]['filter']}" data-list="{$filter_columns[$column['name']]['list']}" data-type="{$filter_columns[$column['name']]['type']}" data-options='{$filter_columns[$column["name"]]["options"]|default=""}' data-map='{$filter_columns[$column["name"]]["map"]|default=""}' data-field-display="{$column['name']}" data-field="{$filter_columns[$column['name']]['field']}" data-table="{$filter_columns[$column['name']]['table']}" data-toggle="tooltip" data-original-title="筛选"><i class="fa fa-filter {notin name='column.name' value='$_field_display'}text-muted{/notin}"></i></a>
+                                                        <a href="javascript:void(0);" class="field-filter" data-filter="{$filter_columns[$column['name']]['filter']}" data-list="{$filter_columns[$column['name']]['list']}" data-type="{$filter_columns[$column['name']]['type']}" data-options='{$filter_columns[$column["name"]]["options"]|default=""}' data-map='{$filter_columns[$column["name"]]["map"]|default=""}' data-field-display="{$column['name']}" data-token="{$filter_columns[$column['name']]['token']}" data-toggle="tooltip" data-original-title="筛选"><i class="fa fa-filter {notin name='column.name' value='$_field_display'}text-muted{/notin}"></i></a>
                                                         {php}endif;{/php}
                                                         </span>
                                                     </th>
@@ -577,7 +577,7 @@
             var table_left_body = $('#builder-table-left-body').find('table');
             var table_right_head = $('#builder-table-right-head').find('table');
             var table_right_body = $('#builder-table-right-body').find('table');
-            var table_head_tr = $('#builder-table-main-tr').find('td');
+            var table_head_tr_td = table_main.find('tr:first-child td');
             var table_body = $('#builder-table-body');
             var table_body_col  = table_body.find('col');
             var table_body_first_tr_th_len = table_body_col.length;
@@ -590,7 +590,7 @@
             table_right_body.width(table_main.width());
 
             // 设置表头列宽度
-            $.each(table_head_tr, function (i, e) {
+            $.each(table_head_tr_td, function (i, e) {
                 if (i < left_column) {
                     left_width += $(this).outerWidth();
                 }
