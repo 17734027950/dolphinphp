@@ -29,7 +29,7 @@ return [
     // 数据库编码默认采用utf8
     'charset'         => 'utf8',
     // 数据库表前缀
-    'prefix'          => '',
+    'prefix'          => 'dp_',
     // 数据库调试模式
     'debug'           => true,
     // 数据库部署方式:0 集中式(单一服务器),1 分布式(主从服务器)
@@ -40,6 +40,8 @@ return [
     'master_num'      => 1,
     // 指定从服务器序号
     'slave_no'        => '',
+    // 自动读取主库数据
+    'read_master'     => false,
     // 是否严格检查字段是否存在
     'fields_strict'   => false,
     // 数据集返回类型

@@ -94,7 +94,7 @@ class Config
 
             if ($module != '' && !in_array($module, config('module.default_controller_layer'))) {
                 // 修改默认访问控制器层
-                // config('url_controller_layer', 'home');
+                config('url_controller_layer', 'home');
             }
         }
 
