@@ -2,11 +2,9 @@
 // +----------------------------------------------------------------------
 // | 海豚PHP框架 [ DolphinPHP ]
 // +----------------------------------------------------------------------
-// | 版权所有 2016~2017 河源市卓锐科技有限公司 [ http://www.zrthink.com ]
+// | 版权所有 2016~2019 广东卓锐软件有限公司 [ http://www.zrthink.com ]
 // +----------------------------------------------------------------------
 // | 官方网站: http://dolphinphp.com
-// +----------------------------------------------------------------------
-// | 开源协议 ( http://www.apache.org/licenses/LICENSE-2.0 )
 // +----------------------------------------------------------------------
 
 namespace app\common\builder\table;
@@ -14,7 +12,8 @@ namespace app\common\builder\table;
 use app\admin\model\Menu;
 use app\common\builder\ZBuilder;
 use app\user\model\Role;
-use think\Cache;
+use think\facade\Cache;
+use think\facade\Env;
 
 /**
  * 表格构建器
@@ -163,13 +162,13 @@ class Builder extends ZBuilder
      * 初始化
      * @author 蔡伟明 <314013107@qq.com>
      */
-    public function _initialize()
+    public function initialize()
     {
         $this->_module     = $this->request->module();
         $this->_controller = parse_name($this->request->controller());
         $this->_action     = $this->request->action();
         $this->_table_name = strtolower($this->_module.'_'.$this->_controller);
-        $this->_template   = APP_PATH. 'common/builder/table/layout.html';
+        $this->_template   = Env::get('app_path'). 'common/builder/table/layout.html';
 
         // 默认加载快速编辑所需js和css
         $this->_vars['_js_files'][]  = 'editable_js';
@@ -420,7 +419,7 @@ class Builder extends ZBuilder
                 $_field = $map;
             }
 
-            $_map[$_field] = isset($_filter_content[$_pos]) ? ['in', $_filter_content[$_pos]] : ['eq', ''];
+            $_map[] = isset($_filter_content[$_pos]) ? [$_field, 'in', $_filter_content[$_pos]] : [$_field, 'eq', ''];
         }
 
         return $_map;
@@ -1295,10 +1294,11 @@ class Builder extends ZBuilder
      * @param string $default 默认值
      * @param string $param 额外参数
      * @param string $class css类名
+     * @param string $extra 扩展参数
      * @author 蔡伟明 <314013107@qq.com>
      * @return $this
      */
-    public function addColumn($name = '', $title = '', $type = '', $default = '', $param = '', $class = '')
+    public function addColumn($name = '', $title = '', $type = '', $default = '', $param = '', $class = '', $extra = '')
     {
         $field = $name;
         $table = '';
@@ -1319,11 +1319,12 @@ class Builder extends ZBuilder
             'default' => $default,
             'param'   => $param,
             'class'   => $class,
+            'extra'   => $extra,
             'field'   => $field,
             'table'   => $table,
         ];
 
-        $args   = array_slice(func_get_args(), 6);
+        $args   = array_slice(func_get_args(), 7);
         $column = array_merge($column, $args);
 
         $this->_vars['columns'][] = $column;
@@ -1432,7 +1433,7 @@ class Builder extends ZBuilder
             $this->data = $row_list;
             // 转为数组后的表格数据
             $this->_vars['row_list'] = $this->toArray($row_list);
-            if (is_object($row_list) && !$row_list->isEmpty()) {
+            if ($row_list instanceof \think\paginator) {
                 $this->_vars['_page_info'] = $row_list;
                 // 设置分页
                 $this->setPages($row_list->render());
@@ -1457,24 +1458,13 @@ class Builder extends ZBuilder
      */
     private function toArray($row_list)
     {
-        if (is_array($row_list)) {
-            if (empty($row_list)) return [];
-            if (is_object(current($row_list))) {
-                $items = [];
-                foreach ($row_list as $key => $value) {
-                    $items[$key] = $value->toArray();
-                }
-                return $items;
-            }
+        if ($row_list instanceof \think\paginator) {
+            return $row_list->toArray()['data'];
+        } elseif ($row_list instanceof \think\model\Collection) {
+            return $row_list->toArray();
+        } else {
             return $row_list;
         }
-
-        if ($row_list->isEmpty()) return [];
-
-        if (is_object(current($row_list->getIterator()))) {
-            return $row_list->toArray()['data'];
-        }
-        return $row_list->all();
     }
 
     /**
@@ -1486,13 +1476,15 @@ class Builder extends ZBuilder
      */
     private function getData($index = '', $field = '')
     {
-        if (is_object($this->data) && is_object(current($this->data->getIterator()))) {
-            try {
+        if ($this->data instanceof \think\paginator) {
+            if (is_object(current($this->data->getIterator()))) {
                 $result = $this->data[$index]->getData($field);
-            } catch (\Exception $e) {
+            } else {
                 $result = $this->data[$index][$field];
             }
             return $result;
+        } elseif ($this->data instanceof \think\model\Collection) {
+            return $this->data[$index]->getData($field);
         } else {
             return $this->data[$index][$field];
         }
@@ -1585,6 +1577,31 @@ class Builder extends ZBuilder
             $tag != '' && $tag = '_'.$tag;
             $this->_vars['extra_html'.$tag] = $extra_html;
         }
+        return $this;
+    }
+
+    /**
+     * 通过文件设置额外代码
+     * @param string $template 模板文件名
+     * @param string $tag 标记
+     * @param array $vars 模板输出变量
+     * @author 蔡伟明 <314013107@qq.com>
+     * @return $this
+     */
+    public function setExtraHtmlFile($template = '', $tag = '', $vars = [])
+    {
+        $template = $template == '' ? $this->_action : $template;
+        $file = Env::get('app_path'). $this->_module.'/view/admin/'.$this->_controller.'/'.$template.'.html';
+        if (file_exists($file)) {
+            $content = file_get_contents($file);
+            $content = $this->view->display($content, $vars);
+        } else {
+            $content = '模板文件不存在：'.$file;
+        }
+
+        $tag != '' && $tag = '_'.$tag;
+        $this->_vars['extra_html'.$tag] = $content;
+
         return $this;
     }
 
@@ -1840,8 +1857,14 @@ class Builder extends ZBuilder
 
                                 $url = $column['class'] == 'pop' ? $url.(strpos($url, '?') ? '&' : '?').'_pop=1' : $url;
 
+                                if ($column['extra'] != '') {
+                                    $title = $column['extra'] === true ? $column['title'] : $column['extra'];
+                                } else {
+                                    $title = $row[$column['name']];
+                                }
+
                                 $row[$column['name'].'__'.$column['type']] = '<a href="'. $url .'"
-                                    title="'. $row[$column['name']] .'"
+                                    title="'. $title .'"
                                     class="'. $column['class'] .'"
                                     target="'.$target.'">'.$row[$column['name']].'</a>';
                             }
@@ -2036,8 +2059,12 @@ class Builder extends ZBuilder
                             break;
                         case 'select': // 下拉框
                             if ($column['default']) {
-                                $prepend = isset($column['default'][$row[$column['name']]]) ? $column['default'][$row[$column['name']]] : '无对应值';
-                                $class   = $prepend == '无对应值' ? 'select-edit text-danger' : 'select-edit';
+                                if (isset($column['default'][$row[$column['name']]])) {
+                                    $prepend = $column['default'][$row[$column['name']]] != '' ? $column['default'][$row[$column['name']]] : '空值';
+                                } else {
+                                    $prepend = '无对应值';
+                                }
+                                $class   = ($prepend == '无对应值' || $prepend == '空值') ? 'select-edit text-danger' : 'select-edit';
                                 $source = json_encode($column['default'], JSON_FORCE_OBJECT);
                                 $row[$column['name'].'__'.$column['type']] = '<a href="javascript:void(0);" 
                                     class="'.$class.'"
@@ -2192,7 +2219,7 @@ class Builder extends ZBuilder
      */
     private function createFilterToken($table = '', $field = '')
     {
-        $table_token = substr(sha1($table.'-'.$field.'-'.session('user_auth.last_login_ip').'-'.UID.'-'.session('user_auth.last_login_time')), 0, 8);
+        $table_token = substr(sha1($table.'-'.$field.'-'.session('user_auth.last_login_ip').'-'.session('user_auth.uid').'-'.session('user_auth.last_login_time')), 0, 8);
         session($table_token, ['table' => $table, 'field' => $field]);
         return $table_token;
     }
@@ -2483,12 +2510,11 @@ class Builder extends ZBuilder
      * 加载模板输出
      * @param string $template 模板文件名
      * @param array  $vars     模板输出变量
-     * @param array  $replace  模板替换
      * @param array  $config   模板参数
      * @author 蔡伟明 <314013107@qq.com>
      * @return mixed
      */
-    public function fetch($template = '', $vars = [], $replace = [], $config = [])
+    public function fetch($template = '', $vars = [], $config = [])
     {
         // 编译表格数据
         $this->compileTable();
@@ -2502,6 +2528,6 @@ class Builder extends ZBuilder
         }
 
         // 实例化视图并渲染
-        return parent::fetch($this->_template, $this->_vars, $replace, $config);
+        return parent::fetch($this->_template, $this->_vars, $config);
     }
 }
